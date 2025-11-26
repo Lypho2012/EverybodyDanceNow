@@ -7,6 +7,7 @@ import time
 from . import util
 from . import html
 import scipy.misc 
+from PIL import Image
 try:
     from StringIO import StringIO  # Python 2.7
 except ImportError:
@@ -23,7 +24,7 @@ class Visualizer():
             import tensorflow as tf
             self.tf = tf
             self.log_dir = os.path.join(opt.checkpoints_dir, opt.name, 'logs')
-            self.writer = tf.summary.FileWriter(self.log_dir)
+            self.writer = tf.summary.create_file_writer(self.log_dir)
 
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
@@ -38,22 +39,40 @@ class Visualizer():
     # |visuals|: dictionary of images to display or save
     def display_current_results(self, visuals, epoch, step):
         if self.tf_log: # show images in tensorboard output
-            img_summaries = []
-            for label, image_numpy in visuals.items():
-                # Write the image to a string
-                try:
-                    s = StringIO()
-                except:
-                    s = BytesIO()
-                scipy.misc.toimage(image_numpy).save(s, format="jpeg")
-                # Create an Image object
-                img_sum = self.tf.Summary.Image(encoded_image_string=s.getvalue(), height=image_numpy.shape[0], width=image_numpy.shape[1])
-                # Create a Summary value
-                img_summaries.append(self.tf.Summary.Value(tag=label, image=img_sum))
 
-            # Create and write Summary
-            summary = self.tf.Summary(value=img_summaries)
-            self.writer.add_summary(summary, step)
+            with self.writer.as_default():
+                for label, image_numpy in visuals.items():
+                    try:
+                        s = StringIO()
+                    except:
+                        s = BytesIO()
+                    image_pil = Image.fromarray(image_numpy)
+                    image_pil.save(s, format="jpeg")
+                    
+                    # Ensure the image is in the correct format (HWC and uint8) 
+                    # before logging, as tf.summary.image expects it.
+                    # If your image_numpy is float (0.0-1.0), you MUST scale it.
+                    if image_numpy.dtype != np.uint8:
+                        # Scale and convert to 8-bit integer
+                        image_numpy = (image_numpy * 255).astype(np.uint8)
+                    Image.fromarray(image_numpy).save(s, format="jpeg")
+
+                    # Log the image directly using the TF2 API
+                    # Note: The input to tf.summary.image should be a tensor/numpy array.
+                    # It expects the image in shape [batch, height, width, channels] or [height, width, channels].
+                    
+                    # Check if it needs a batch dimension [1, H, W, C]
+                    if len(image_numpy.shape) == 3:
+                        # Add a batch dimension of 1 for correct logging shape
+                        image_tensor = np.expand_dims(image_numpy, axis=0)
+                    else:
+                        # Assume [H, W] grayscale, tf.summary.image can handle this.
+                        image_tensor = image_numpy 
+                        
+                    self.tf.summary.image(label, image_tensor, step=step)
+
+            # Flush the writer outside the loop
+            self.writer.flush()
 
         if self.use_html: # save images to a html file
             for label, image_numpy in visuals.items():
@@ -96,9 +115,11 @@ class Visualizer():
     # errors: dictionary of error labels and values
     def plot_current_errors(self, errors, step):
         if self.tf_log:
+          with self.writer.as_default():
             for tag, value in errors.items():            
-                summary = self.tf.Summary(value=[self.tf.Summary.Value(tag=tag, simple_value=value)])
-                self.writer.add_summary(summary, step)
+              self.tf.summary.scalar(tag, value, step=step)
+          
+          self.writer.flush()
 
     # errors: same format as |errors| of plotCurrentErrors
     def print_current_errors(self, epoch, i, errors, t):
