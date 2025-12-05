@@ -49,7 +49,7 @@ get_factexts = opt.facetexts #True
 boxbuffer = opt.boxbuffer #70
 
 numframesmade = 0
-n = start
+n = 0
 
 print (step)
 
@@ -86,8 +86,8 @@ print('----------------- Loading Frames -----------------')
 frames = sorted(os.listdir(frames_dir))
 print (frames)
 print('----------------- All Loaded -----------------')
-
-while n <= end:
+keypoints = sorted(os.listdir(keypoints_dir))
+while n < len(keypoints):
 	print (n)
 	framesmadestr = '%06d' % numframesmade
 
@@ -103,7 +103,8 @@ while n <= end:
 	r_handpts = readkeypointsfile(key_name + "_hand_right")
 	l_handpts = readkeypointsfile(key_name + "_hand_left")
 	if posepts is None: ## try json
-		posepts, facepts, r_handpts, l_handpts = readkeypointsfile(key_name + "_keypoints")
+		print(keypoints[n],frames[n])
+		posepts, facepts, r_handpts, l_handpts = readkeypointsfile(keypoints_dir+"/"+keypoints[n])#readkeypointsfile(key_name + "_keypoints")
 		if posepts is None:
 			print('unable to read keypoints file')
 			import sys
@@ -142,8 +143,8 @@ while n <= end:
 		oriImg = Image.fromarray(oriImg[:, :, [2,1,0]])
 		canvas = Image.fromarray(canvas[:, :, [2,1,0]])
 
-		oriImg = oriImg.resize((2*SIZE,SIZE), Image.ANTIALIAS)
-		canvas = canvas.resize((2*SIZE,SIZE), Image.ANTIALIAS)
+		oriImg = oriImg.resize((2*SIZE,SIZE), Image.LANCZOS)
+		canvas = canvas.resize((2*SIZE,SIZE), Image.LANCZOS)
 
 		oriImg.save(savedir + '/train_img/' + filebase_name + '.png')
 		canvas.save(savedir + '/train_label/' + filebase_name + '.png')

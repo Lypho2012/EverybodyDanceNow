@@ -1,21 +1,9 @@
 import argparse
-import cv2 as cv 
 import numpy as np
-import scipy
-import math
-import time
-import copy
-import matplotlib
 #%matplotlib inline
-import pylab as plt
-import json
 from PIL import Image
-from shutil import copyfile
 # from skimage import img_as_float
-from functools import reduce
 from renderopenpose import *
-from scipy.misc import imresize
-from scipy.misc import imsave
 import os
 import shutil
 
@@ -345,7 +333,7 @@ def transform_interp(mypath, scaleyy, translation, myshape, savedir, spread_m, s
 				canvas = canvas[starty:endy, startx:endx, [2,1,0]]
 				canvas = Image.fromarray(canvas)
 
-				canvas = canvas.resize((2*SIZE,SIZE), Image.ANTIALIAS)
+				canvas = canvas.resize((2*SIZE,SIZE), Image.LANCZOS)
 				canvas.save(savedir + '/test_label/frame' + framesmadestr + '.png')
 
 				if len(framesdir) > 0:
