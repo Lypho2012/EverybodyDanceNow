@@ -83,10 +83,10 @@ if opt.debug and (not os.path.exists(savedir + '/debug')):
 	os.makedirs(savedir + '/debug')
 
 print('----------------- Loading Frames -----------------')
-frames = sorted(os.listdir(frames_dir))
+frames = os.listdir(frames_dir)
 print (frames)
 print('----------------- All Loaded -----------------')
-keypoints = sorted(os.listdir(keypoints_dir))
+keypoints = os.listdir(keypoints_dir)
 while n < len(keypoints):
 	print (n)
 	framesmadestr = '%06d' % numframesmade
