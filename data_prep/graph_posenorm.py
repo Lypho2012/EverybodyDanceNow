@@ -17,7 +17,7 @@ n = start
 SIZE = 512
 
 f_threshold = 0.2
-poselen = 69
+poselen = 54
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 ##### pose normalization from source ----> target. Then apply pose ----> target mapping to complete transfer.
@@ -55,29 +55,33 @@ def get_keypoints_stats(mypath, myshape, spread, startname = "frame", stophere=2
 	heights = []
 	tiptoe_to_height = {}
 	ok = True
+	i = 0
 
-	while ok:
+	while i<len(filenames) and ok:
 		mynum = np.random.randint(low=spread[0], high=spread[1])
 		strmynum = '%06d' % mynum
 		f_yaml = startname + strmynum + "_pose.yml"
 		f_json = startname + strmynum + "_keypoints.json"
+		f = filenames[i]
+		i += 1
 
-		if os.path.isfile(os.path.join(mypath, f_yaml)) or os.path.isfile(os.path.join(mypath, f_json)):
+		if os.path.isfile(os.path.join(mypath, f)) or os.path.isfile(os.path.join(mypath, f_yaml)) or os.path.isfile(os.path.join(mypath, f_json)):
 			key_name = os.path.join(mypath, f_yaml)
 
 			posepts = []
 
 			### try yaml
-			posepts = readkeypointsfile(key_name)
+			posepts = None #readkeypointsfile(key_name)
 			if posepts is None: ## try json
-				key_name = os.path.join(mypath, f_json)
+				key_name = os.path.join(mypath, f)
 				posepts, _, _, _ = readkeypointsfile(key_name)
+				print(key_name,len(posepts))
 				if posepts is None:
 					print('unable to read keypoints file')
 					import sys
 					sys.exit(0)
 
-			if len(posepts) != poselen:
+			if len(posepts) < poselen:
 				print ("EMPTY stats", key_name, len(posepts))
 				continue
 			else:
@@ -270,7 +274,7 @@ def transform_interp(mypath, scaleyy, translation, myshape, savedir, spread_m, s
 
 		startcanvas = 255 * np.ones(myshape, dtype='uint8')
 
-		if len(posepts) != poselen:
+		if len(posepts) < poselen:
 			print ("EMPTY or more than one person")
 		else:
 			posepts = posepts[:poselen]
