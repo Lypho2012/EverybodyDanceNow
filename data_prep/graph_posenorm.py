@@ -40,6 +40,7 @@ parser.add_argument('--filestart', type=str, default='frame', help='file start n
 parser.add_argument('--calculate_scale_translation', action='store_true', help='use this flag to calcuate the translation and scale from scratch. Else, try to load them from a saved file.')
 parser.add_argument('--format', type=str, default='json', help='file format for keypoint files, only json and yaml are supported, [json|yaml]')
 
+opt = parser.parse_args()
 
 def get_keypoints_stats(mypath, myshape, spread, startname = "frame", stophere=20000):
 
@@ -117,7 +118,7 @@ def get_keypoints_stats(mypath, myshape, spread, startname = "frame", stophere=2
 
 
 def get_minmax_scales(tiptoe_to_height0, tiptoe_to_height1, translation, frac):
-	sorted_tiptoes0 = tiptoe_to_height0.keys().sort()
+	# sorted_tiptoes0 = tiptoe_to_height0.keys().sort()
 
 	m_maxtoe, m_horizon = translation[0]
 	t_maxtoe, t_horizon = translation[1]
@@ -249,8 +250,12 @@ def transform_interp(mypath, scaleyy, translation, myshape, savedir, spread_m, s
 	lastscale = 0
 
 	noneighbors = []
+	n = 0
+	print(mypath + "/" + startname)
+	keypoints_dir = opt.source_keypoints
+	keypoints = os.listdir(keypoints_dir)
 
-	while n <= end:
+	while n < len(keypoints):
 		print (n)
 		framesmadestr = '%06d' % numberframesmade
 		string_num = '%06d' % n
@@ -266,7 +271,7 @@ def transform_interp(mypath, scaleyy, translation, myshape, savedir, spread_m, s
 		r_handpts = readkeypointsfile(key_name + "_hand_right")
 		l_handpts = readkeypointsfile(key_name + "_hand_left")
 		if posepts is None: ## try json
-			posepts, facepts, r_handpts, l_handpts = readkeypointsfile(key_name + "_keypoints")
+			posepts, facepts, r_handpts, l_handpts = readkeypointsfile(keypoints_dir+"/"+keypoints[n])
 			if posepts is None:
 				print('unable to read keypoints file')
 				import sys

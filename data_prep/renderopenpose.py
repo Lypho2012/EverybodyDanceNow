@@ -599,7 +599,24 @@ def get_pose_stats(posepts):
 
 		return height, min_tip_toe, max_tip_toe
 	else:
-		return None
+		min_y = float('inf')
+		max_y = float('-inf')
+		found_keypoints = False
+
+		for i in range(1, len(posepts), 3): # Iterate on Y coordinates
+			if posepts[i + 1] > 0: # Check confidence (index i+1 is confidence)
+				y = posepts[i]
+				min_y = min(min_y, y)
+				max_y = max(max_y, y)
+				found_keypoints = True
+
+		if found_keypoints:
+			# Use bounding box height and the min/max Y for the return values
+			height = max_y - min_y
+			return height, min_y, max_y 
+		else:
+			print(posepts[(3*nose)+2],posepts[(3*rfoot)+2],posepts[(3*lear)+2])
+			return None
 
 # def get_pose_stats23(posepts):
 
